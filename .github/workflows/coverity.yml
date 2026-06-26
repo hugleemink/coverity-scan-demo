@@ -1,4 +1,4 @@
-name: Coverity Scan
+name: Coverity Scan — Static Analysis
 
 on:
   push:
@@ -8,85 +8,43 @@ on:
 
 jobs:
   coverity:
+    name: Run Coverity SAST
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout source code
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Install dependencies
       - name: Install Build Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            gcc \
-            make \
-            wget \
-            curl \
-            tar
+          sudo apt-get install -y build-essential gcc make wget curl
 
-      # Download Coverity Build Tool
       - name: Download Coverity Tool
         run: |
-          wget https://scan.coverity.com/download/linux64 \
+          wget -q https://scan.coverity.com/download/linux64 \
             --post-data "token=${{ secrets.COVERITY_SCAN_TOKEN }}&project=hugleemink%2Fcoverity-scan-demo" \
             -O coverity_tool.tgz
+          mkdir -p coverity_tool
+          tar xzf coverity_tool.tgz --strip 1 -C coverity_tool
 
-          mkdir coverity_tool
-
-          tar -xzf coverity_tool.tgz \
-            --strip-components=1 \
-            -C coverity_tool
-
-          echo "========== Coverity Files =========="
-          ls -la coverity_tool/bin
-
-      # Debug repository
-      - name: Show Repository
+      - name: Configure Coverity for GCC
         run: |
-          echo "Current directory:"
-          pwd
-          echo ""
-          ls -R
+          coverity_tool/bin/cov-configure --gcc
 
-      # Test build
-      - name: Test Build
+      - name: Build with Coverity
         run: |
-          make clean
-          make all
+          mkdir -p cov-int/tmp
+          chmod -R 777 cov-int
+          coverity_tool/bin/cov-build --dir cov-int make clean all
 
-      # Capture build
-      - name: Capture Build
+      - name: Submit to Coverity
         run: |
-          rm -rf cov-int
-
-          coverity_tool/bin/cov-build \
-            --dir cov-int \
-            make all
-
-      # Verify output
-      - name: Verify Capture
-        run: |
-          echo "Capture completed"
-          ls -R cov-int
-
-      # Package result
-      - name: Package Analysis
-        run: |
-          tar czf analysis.tgz cov-int
-
-      # Upload to Coverity Scan
-      - name: Upload Analysis
-        run: |
+          tar czvf analysis.tgz cov-int
           curl \
-            --form token="${{ secrets.COVERITY_SCAN_TOKEN }}" \
-            --form email="${{ secrets.COVERITY_EMAIL }}" \
+            --form token=${{ secrets.COVERITY_SCAN_TOKEN }} \
+            --form email=${{ secrets.COVERITY_EMAIL }} \
             --form file=@analysis.tgz \
-            --form version="${{ github.sha }}" \
-            --form description="GitHub Actions Coverity Scan" \
-            "https://scan.coverity.com/builds?project=hugleemink%2Fcoverity-scan-demo"
-
-      - name: Done
-        run: echo "Coverity Scan Finished Successfully!"
+            --form version="v1.0.0" \
+            --form description="GitHub Actions build" \
+            https://scan.coverity.com/builds?project=hugleemink%2Fcoverity-scan-demo

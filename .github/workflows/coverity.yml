@@ -20,6 +20,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential gcc make
 
+      - name: Prepare directories
+        run: |
+          mkdir -p cov-int
+          chmod 777 cov-int
+          make clean all
+
       - name: Run Coverity Scan
         uses: vapier/coverity-scan-action@v1
         with:

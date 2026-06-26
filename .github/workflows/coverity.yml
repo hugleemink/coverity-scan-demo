@@ -1,0 +1,81 @@
+name: Coverity Scan — Static Analysis
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+  # Cho phép chạy thủ công từ Actions tab
+  workflow_dispatch:
+
+jobs:
+  coverity:
+    name: Run Coverity SAST
+    runs-on: ubuntu-latest
+
+    steps:
+      # ─────────────────────────────────────────
+      # 1. Checkout source code
+      # ─────────────────────────────────────────
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      # ─────────────────────────────────────────
+      # 2. Cài đặt build tools
+      # ─────────────────────────────────────────
+      - name: 🔧 Install Build Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            gcc \
+            g++ \
+            make \
+            cmake \
+            wget \
+            curl
+
+      # ─────────────────────────────────────────
+      # 3. Build project trước (kiểm tra compile)
+      # ─────────────────────────────────────────
+      - name: 🏗️ Build Project
+        run: make all
+
+      # ─────────────────────────────────────────
+      # 4. Chạy Coverity Scan
+      # ─────────────────────────────────────────
+      - name: 🔍 Run Coverity Scan
+        uses: vapier/coverity-scan-action@v1
+        with:
+          # Tên project trên scan.coverity.com (PHẢI khớp chính xác, phân biệt hoa thường)
+          # Ví dụ: "username/repo-name"
+          project: ${{ github.repository }}
+
+          # Token bí mật từ scan.coverity.com → Project Settings → Project token
+          token: ${{ secrets.COVERITY_SCAN_TOKEN }}
+
+          # Email đăng ký tài khoản Coverity Scan
+          email: ${{ secrets.COVERITY_EMAIL }}
+
+          # Lệnh build (Coverity sẽ intercept quá trình build)
+          build_command: make clean all
+
+          # Phiên bản Coverity tool (để trống = dùng mới nhất)
+          version: ''
+
+          # Mô tả build (tùy chọn)
+          description: 'CI build - ${{ github.sha }}'
+
+      # ─────────────────────────────────────────
+      # 5. Upload kết quả (tùy chọn - lưu artifact)
+      # ─────────────────────────────────────────
+      - name: 📤 Upload Coverity Results Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverity-scan-results
+          path: cov-int/
+          retention-days: 7

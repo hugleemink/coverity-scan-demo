@@ -1,0 +1,29 @@
+# Build artifacts
+obj/
+*.o
+*.a
+*.so
+coverity_demo
+coverity_demo_asan
+
+# Coverity results
+cov-int/
+analysis.tgz
+coverity_tool.tgz
+cov-analysis-linux64-*/
+
+# Temporary files
+*.tmp
+*.log
+/tmp/test_coverity_demo.txt
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

@@ -20,15 +20,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential gcc make
 
-      - name: Verify Build Works
-        run: |
-          make clean all
-          echo "Build OK, ready for Coverity"
-
       - name: Run Coverity Scan
         uses: vapier/coverity-scan-action@v1
         with:
           project: 'hugleemink/coverity-scan-demo'
           token: ${{ secrets.COVERITY_SCAN_TOKEN }}
           email: ${{ secrets.COVERITY_EMAIL }}
-          build_command: make clean all
+          command: make clean all

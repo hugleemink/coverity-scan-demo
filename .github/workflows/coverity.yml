@@ -30,7 +30,8 @@ jobs:
 
       - name: Build with Coverity
         run: |
-          mkdir -p cov-int
+          mkdir -p cov-int/tmp
+          chmod -R 777 cov-int
           coverity_tool/bin/cov-build --dir cov-int make clean all
 
       - name: Submit to Coverity

@@ -18,7 +18,7 @@ jobs:
       - name: Install Build Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential gcc make wget curl jq
+          sudo apt-get install -y build-essential gcc make wget curl
 
       - name: Download Coverity Tool
         run: |
@@ -40,11 +40,9 @@ jobs:
         run: |
           tar czvf analysis.tgz cov-int
 
-      - name: Submit to Coverity
-        run: |
-          curl --form token=${{ secrets.COVERITY_SCAN_TOKEN }} \
-            --form email=${{ secrets.COVERITY_EMAIL }} \
-            --form file=@analysis.tgz \
-            --form version="v1.0.0" \
-            --form description="GitHub Actions build" \
-            https://scan.coverity.com/builds?project=hugleemink%2Fcoverity-scan-demo
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverity-analysis
+          path: analysis.tgz
+          retention-days: 1

@@ -25,24 +25,24 @@ jobs:
           wget https://scan.coverity.com/download/linux64 \
             --post-data "token=${{ secrets.COVERITY_SCAN_TOKEN }}&project=hugleemink%2Fcoverity-scan-demo" \
             -O coverity_tool.tgz
-          mkdir -p coverity_tool
-          tar xzf coverity_tool.tgz --strip 1 -C coverity_tool
+          mkdir -p $HOME/coverity_tool
+          tar xzf coverity_tool.tgz --strip 1 -C $HOME/coverity_tool
 
       - name: Configure Coverity for GCC
         run: |
-          coverity_tool/bin/cov-configure --gcc
+          $HOME/coverity_tool/bin/cov-configure --gcc
 
       - name: Build with Coverity
         run: |
-          coverity_tool/bin/cov-build --dir cov-int make clean all
+          $HOME/coverity_tool/bin/cov-build --dir $HOME/cov-int make clean all
 
       - name: Package Results
         run: |
-          tar czvf analysis.tgz cov-int
+          tar czvf $HOME/analysis.tgz -C $HOME cov-int
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: coverity-analysis
-          path: analysis.tgz
+          path: ~/analysis.tgz
           retention-days: 1
